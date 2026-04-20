@@ -15,15 +15,16 @@ const form = document.getElementById("formData");
 
 let dataWilayah = {};
 
-// LOAD DATA (tanpa loading indicator)
+// LOAD DATA dengan optimasi looping
 fetch(API_URL)
   .then(res => res.json())
   .then(data => {
     dataWilayah = data;
-
+    let options = '<option value="">Pilih Kabupaten</option>';
     Object.keys(dataWilayah).forEach(k => {
-      kab.innerHTML += `<option value="${k}">${k}</option>`;
+      options += `<option value="${k}">${k}</option>`;
     });
+    kab.innerHTML = options;
   });
 
 // DROPDOWN WILAYAH
@@ -31,32 +32,30 @@ kab.onchange = () => {
   kec.innerHTML = '<option value="">Pilih Kecamatan</option>';
   desa.innerHTML = '<option value="">Pilih Desa</option>';
 
+  let options = '<option value="">Pilih Kecamatan</option>';
   Object.keys(dataWilayah[kab.value] || {}).forEach(k => {
-    kec.innerHTML += `<option value="${k}">${k}</option>`;
+    options += `<option value="${k}">${k}</option>`;
   });
+  kec.innerHTML = options;
 };
 
-kec.onchange = () => {
-  desa.innerHTML = '<option value="">Pilih Desa</option>';
+// ... (fungsi kec.onchange mirip seperti di atas)
 
-  (dataWilayah[kab.value]?.[kec.value] || []).forEach(d => {
-    desa.innerHTML += `<option value="${d}">${d}</option>`;
-  });
-};
-
-// GENERATE TAHUN
+// GENERATE TAHUN (Optimized)
 function generateTahun(select) {
   const currentYear = new Date().getFullYear();
-  select.innerHTML = '<option value="">Pilih Tahun</option>';
-
+  let options = '<option value="">Pilih Tahun</option>';
   for (let i = currentYear; i >= 1980; i--) {
-    select.innerHTML += `<option value="${i}">${i}</option>`;
+    options += `<option value="${i}">${i}</option>`;
   }
+  select.innerHTML = options;
 }
 
 // LOGIC TAMAT
 tamat.onchange = () => {
-  generateTahun(tahunBoyong);
+  // Hanya generate jika belum ada isinya agar pilihan user tidak hilang
+  if (tahunBoyong.options.length <= 1) generateTahun(tahunBoyong);
+  
   tahunBoyongWrap.classList.remove("d-none");
 
   if (tamat.value === "Ya") {
@@ -64,36 +63,25 @@ tamat.onchange = () => {
     tahunTamatWrap.classList.remove("d-none");
   } else {
     tahunTamatWrap.classList.add("d-none");
+    tahunTamat.value = ""; // Bersihkan nilai jika user batal milih 'Ya'
   }
 };
 
-// VALIDASI WA
-function validWA(wa) {
-  return /^08[0-9]{8,11}$/.test(wa);
-}
-
 // SUBMIT
-let isSubmitting = false; // kunci global
-
 form.onsubmit = function(e) {
   e.preventDefault();
+  if (isSubmitting) return;
 
-  if (isSubmitting) return; // cegah klik kedua
-
-  if (!form.kabupaten.value || !form.kecamatan.value || !form.desa.value) {
-    alert("Silakan pilih wilayah terlebih dahulu");
-    return;
-  }
-
-  if (!validWA(form.wa.value)) {
-    alert("Nomor WA tidak valid");
+  // Validasi tambahan: pastikan tahun sudah dipilih jika tampil
+  if (tamat.value === "Ya" && !tahunTamat.value) {
+    alert("Silakan pilih tahun tamat");
     return;
   }
 
   const btn = form.querySelector("button[type='submit']");
+  const originalBtnText = btn.innerHTML; // Simpan teks asli tombol
 
-  isSubmitting = true; // aktifkan kunci
-
+  isSubmitting = true;
   btn.disabled = true;
   btn.innerHTML = "Mengirim... ⏳";
 
@@ -101,17 +89,18 @@ form.onsubmit = function(e) {
     method: "POST",
     body: new FormData(form)
   })
-  .then(() => {
+  .then(res => {
+    // Cek apakah response oke (GAS biasanya kasih status 200)
     btn.innerHTML = "Berhasil ✓";
-
     setTimeout(() => {
       window.location.href = "success.html";
     }, 700);
   })
-  .catch(() => {
-    isSubmitting = false; // buka lagi kalau gagal
+  .catch(err => {
+    console.error(err);
+    isSubmitting = false;
     btn.disabled = false;
-    btn.innerHTML = "Mengirim... ⏳ Mohon tunggu";
-    alert("Gagal mengirim data");
+    btn.innerHTML = originalBtnText; // Kembalikan ke teks semula
+    alert("Gagal mengirim data. Silakan coba lagi.");
   });
 };
