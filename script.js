@@ -86,8 +86,10 @@ form.onsubmit = function(e) {
     body: new FormData(form)
   })
   .then(() => {
-    const modal = new bootstrap.Modal(document.getElementById('successModal'));
-    modal.show();
+     // redirect ke halaman sukses
+    setTimeout(() => {
+        window.location.href = "success.html";
+    }, 800);
 
     form.reset();
     tahunTamatWrap.classList.add("d-none");
