@@ -1,0 +1,13 @@
+body {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.card {
+  max-width: 600px;
+  margin: auto;
+  border-radius: 20px;
+}
+
+input, select {
+  border-radius: 10px !important;
+}
