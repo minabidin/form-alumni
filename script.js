@@ -18,7 +18,7 @@ let isSubmitting = false;
 
 
 // ===============================
-// 1. LOAD DATA WILAYAH
+// LOAD DATA WILAYAH
 // ===============================
 fetch(API_URL)
   .then(res => res.json())
@@ -31,22 +31,24 @@ fetch(API_URL)
     });
 
     kab.innerHTML = options;
+    kab.disabled = false;
   })
   .catch(err => {
-    console.error("Gagal memuat data wilayah:", err);
+    console.error(err);
+    kab.innerHTML = '<option>Gagal memuat</option>';
     alert("Gagal memuat data wilayah");
   });
 
 
 // ===============================
-// 2. DROPDOWN KABUPATEN
+// DROPDOWN
 // ===============================
 kab.onchange = () => {
   kec.innerHTML = '<option value="">Pilih Kecamatan</option>';
   desa.innerHTML = '<option value="">Pilih Desa</option>';
 
-  let options = '<option value="">Pilih Kecamatan</option>';
   const listKecamatan = dataWilayah[kab.value] || {};
+  let options = '<option value="">Pilih Kecamatan</option>';
 
   Object.keys(listKecamatan).forEach(k => {
     options += `<option value="${k}">${k}</option>`;
@@ -55,13 +57,9 @@ kab.onchange = () => {
   kec.innerHTML = options;
 };
 
-
-// ===============================
-// 3. DROPDOWN KECAMATAN
-// ===============================
 kec.onchange = () => {
-  let options = '<option value="">Pilih Desa</option>';
   const listDesa = dataWilayah[kab.value]?.[kec.value] || [];
+  let options = '<option value="">Pilih Desa</option>';
 
   listDesa.forEach(d => {
     options += `<option value="${d}">${d}</option>`;
@@ -72,9 +70,11 @@ kec.onchange = () => {
 
 
 // ===============================
-// 4. GENERATE TAHUN
+// GENERATE TAHUN
 // ===============================
 function generateTahun(select) {
+  if (select.options.length > 1) return;
+
   const currentYear = new Date().getFullYear();
   let options = '<option value="">Pilih Tahun</option>';
 
@@ -87,14 +87,12 @@ function generateTahun(select) {
 
 
 // ===============================
-// 5. LOGIC TAMAT
+// LOGIC TAMAT
 // ===============================
 tamat.onchange = () => {
 
-  // tampilkan tahun boyong
   if (tamat.value !== "") {
-    if (tahunBoyong.options.length <= 1) generateTahun(tahunBoyong);
-
+    generateTahun(tahunBoyong);
     tahunBoyongWrap.classList.remove("d-none");
     tahunBoyong.setAttribute("required", "required");
   } else {
@@ -102,7 +100,6 @@ tamat.onchange = () => {
     tahunBoyong.removeAttribute("required");
   }
 
-  // tampilkan tahun tamat hanya jika Ya
   if (tamat.value === "Ya") {
     generateTahun(tahunTamat);
     tahunTamatWrap.classList.remove("d-none");
@@ -116,28 +113,29 @@ tamat.onchange = () => {
 
 
 // ===============================
-// 6. VALIDASI WA
+// VALIDASI WA (FIXED)
 // ===============================
 function validWA(wa) {
-  return /^08[0-9]{8,11}$/.test(wa);
+  return /^(?:\+62|62|08)[0-9]{8,11}$/.test(wa);
 }
 
 
 // ===============================
-// 7. SUBMIT DATA (FINAL)
+// SUBMIT
 // ===============================
 form.onsubmit = function(e) {
   e.preventDefault();
-
   if (isSubmitting) return;
 
-  // validasi wilayah
+  // trim input
+  form.nama.value = form.nama.value.trim();
+  form.wa.value = form.wa.value.trim();
+
   if (!kab.value || !kec.value || !desa.value) {
-    alert("Harap lengkapi data wilayah!");
+    alert("Lengkapi wilayah!");
     return;
   }
 
-  // validasi WA
   if (!validWA(form.wa.value)) {
     alert("Nomor WhatsApp tidak valid!");
     return;
@@ -148,7 +146,7 @@ form.onsubmit = function(e) {
 
   isSubmitting = true;
   btn.disabled = true;
-  btn.innerHTML = "Mengirim... ⏳";
+  btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Mengirim...`;
 
   fetch(API_URL, {
     method: "POST",
@@ -156,26 +154,24 @@ form.onsubmit = function(e) {
   })
   .then(res => res.text())
   .then(res => {
-    console.log("Response:", res);
 
     if (res === "success") {
       btn.innerHTML = "Berhasil ✓";
 
-      setTimeout(() => {
-        window.location.href = "success.html";
-      }, 800);
+      const modal = new bootstrap.Modal(document.getElementById('successModal'));
+      modal.show();
 
+      form.reset();
     } else {
       throw new Error(res);
     }
   })
   .catch(err => {
-    console.error("Error:", err);
+    console.error(err);
+    alert("Gagal mengirim data");
 
     isSubmitting = false;
     btn.disabled = false;
     btn.innerHTML = originalText;
-
-    alert("Gagal mengirim data: " + err.message);
   });
 };
