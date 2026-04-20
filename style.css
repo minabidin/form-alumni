@@ -12,13 +12,11 @@ body {
 
 .form-label {
   font-weight: 600;
-  margin-bottom: 5px;
 }
 
 .form-control {
   border-radius: 10px;
   padding: 10px;
-  transition: 0.3s;
 }
 
 .form-control:focus {
@@ -28,14 +26,9 @@ body {
 
 .btn-premium {
   border-radius: 12px;
-  padding: 10px;
   font-weight: bold;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   border: none;
-}
-
-.btn-premium:hover {
-  opacity: 0.9;
 }
 
 .modal-content {
