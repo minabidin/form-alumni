@@ -3,19 +3,17 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyqw9I7_DqciRcm1poVGJlV
 const kab = document.getElementById("kabupaten");
 const kec = document.getElementById("kecamatan");
 const desa = document.getElementById("desa");
-
 const tamat = document.getElementById("tamat");
 const tahunTamatWrap = document.getElementById("tahunTamatWrap");
 const tahunBoyongWrap = document.getElementById("tahunBoyongWrap");
-
 const tahunTamat = document.getElementById("tahunTamat");
 const tahunBoyong = document.getElementById("tahunBoyong");
-
 const form = document.getElementById("formData");
 
 let dataWilayah = {};
+let isSubmitting = false; 
 
-// LOAD DATA dengan optimasi looping
+// 1. LOAD DATA WILAYAH
 fetch(API_URL)
   .then(res => res.json())
   .then(data => {
@@ -25,23 +23,34 @@ fetch(API_URL)
       options += `<option value="${k}">${k}</option>`;
     });
     kab.innerHTML = options;
-  });
+  })
+  .catch(err => console.error("Gagal memuat data wilayah:", err));
 
-// DROPDOWN WILAYAH
+// 2. DROPDOWN KABUPATEN -> KECAMATAN
 kab.onchange = () => {
   kec.innerHTML = '<option value="">Pilih Kecamatan</option>';
   desa.innerHTML = '<option value="">Pilih Desa</option>';
-
+  
   let options = '<option value="">Pilih Kecamatan</option>';
-  Object.keys(dataWilayah[kab.value] || {}).forEach(k => {
+  const listKecamatan = dataWilayah[kab.value] || {};
+  Object.keys(listKecamatan).forEach(k => {
     options += `<option value="${k}">${k}</option>`;
   });
   kec.innerHTML = options;
 };
 
-// ... (fungsi kec.onchange mirip seperti di atas)
+// 3. DROPDOWN KECAMATAN -> DESA (Perbaikan Utama)
+kec.onchange = () => {
+  desa.innerHTML = '<option value="">Pilih Desa</option>';
+  let options = '<option value="">Pilih Desa</option>';
+  const listDesa = dataWilayah[kab.value]?.[kec.value] || [];
+  listDesa.forEach(d => {
+    options += `<option value="${d}">${d}</option>`;
+  });
+  desa.innerHTML = options;
+};
 
-// GENERATE TAHUN (Optimized)
+// 4. GENERATE TAHUN
 function generateTahun(select) {
   const currentYear = new Date().getFullYear();
   let options = '<option value="">Pilih Tahun</option>';
@@ -51,56 +60,69 @@ function generateTahun(select) {
   select.innerHTML = options;
 }
 
-// LOGIC TAMAT
+// 5. LOGIC TAMAT/BOYONG
 tamat.onchange = () => {
-  // Hanya generate jika belum ada isinya agar pilihan user tidak hilang
-  if (tahunBoyong.options.length <= 1) generateTahun(tahunBoyong);
-  
-  tahunBoyongWrap.classList.remove("d-none");
+  // Selalu tampilkan Tahun Boyong jika status dipilih
+  if (tamat.value !== "") {
+    if (tahunBoyong.options.length <= 1) generateTahun(tahunBoyong);
+    tahunBoyongWrap.classList.remove("d-none");
+    tahunBoyong.setAttribute("required", "required");
+  } else {
+    tahunBoyongWrap.classList.add("d-none");
+    tahunBoyong.removeAttribute("required");
+  }
 
+  // Tampilkan Tahun Tamat hanya jika "Ya"
   if (tamat.value === "Ya") {
     generateTahun(tahunTamat);
     tahunTamatWrap.classList.remove("d-none");
+    tahunTamat.setAttribute("required", "required");
   } else {
     tahunTamatWrap.classList.add("d-none");
-    tahunTamat.value = ""; // Bersihkan nilai jika user batal milih 'Ya'
+    tahunTamat.value = "";
+    tahunTamat.removeAttribute("required");
   }
 };
 
-// SUBMIT
+// 6. SUBMIT DATA
 form.onsubmit = function(e) {
   e.preventDefault();
+  
   if (isSubmitting) return;
 
-  // Validasi tambahan: pastikan tahun sudah dipilih jika tampil
-  if (tamat.value === "Ya" && !tahunTamat.value) {
-    alert("Silakan pilih tahun tamat");
+  // Validasi manual tambahan jika diperlukan
+  if (!kab.value || !kec.value || !desa.value) {
+    alert("Harap lengkapi data wilayah!");
     return;
   }
 
   const btn = form.querySelector("button[type='submit']");
-  const originalBtnText = btn.innerHTML; // Simpan teks asli tombol
+  const originalBtnText = btn.innerHTML;
 
   isSubmitting = true;
   btn.disabled = true;
   btn.innerHTML = "Mengirim... ⏳";
 
+  const formData = new FormData(form);
+
   fetch(API_URL, {
     method: "POST",
-    body: new FormData(form)
+    body: formData,
+    mode: "no-cors" // Gunakan no-cors untuk menghindari blokir CORS Apps Script
   })
-  .then(res => {
-    // Cek apakah response oke (GAS biasanya kasih status 200)
+  .then(() => {
+    // Karena mode no-cors, kita anggap sukses jika tidak masuk ke .catch
     btn.innerHTML = "Berhasil ✓";
     setTimeout(() => {
+      // Pastikan file success.html ada di direktori yang sama
       window.location.href = "success.html";
-    }, 700);
+    }, 800);
   })
   .catch(err => {
-    console.error(err);
+    console.error("Error saat kirim data:", err);
     isSubmitting = false;
     btn.disabled = false;
-    btn.innerHTML = originalBtnText; // Kembalikan ke teks semula
-    alert("Gagal mengirim data. Silakan coba lagi.");
+    btn.innerHTML = originalBtnText;
+    alert("Terjadi kesalahan saat mengirim data. Silakan coba lagi.");
   });
 };
