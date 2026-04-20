@@ -1,13 +1,43 @@
 body {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #4f46e5, #9333ea);
+  font-family: 'Segoe UI', sans-serif;
 }
 
-.card {
+.premium-card {
   max-width: 600px;
   margin: auto;
   border-radius: 20px;
+  background: #ffffff;
 }
 
-input, select {
-  border-radius: 10px !important;
+.form-label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.form-control {
+  border-radius: 10px;
+  padding: 10px;
+  transition: 0.3s;
+}
+
+.form-control:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 0.2rem rgba(99,102,241,0.2);
+}
+
+.btn-premium {
+  border-radius: 12px;
+  padding: 10px;
+  font-weight: bold;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+}
+
+.btn-premium:hover {
+  opacity: 0.9;
+}
+
+.modal-content {
+  border-radius: 20px;
 }
