@@ -76,23 +76,43 @@ function validWA(wa) {
 form.onsubmit = function(e) {
   e.preventDefault();
 
+  if (!form.kabupaten.value || !form.kecamatan.value || !form.desa.value) {
+    alert("Silakan pilih wilayah terlebih dahulu");
+    return;
+  }
+
   if (!validWA(form.wa.value)) {
     alert("Nomor WA tidak valid");
     return;
   }
+
+  const btn = form.querySelector("button[type='submit']");
+
+  btn.disabled = true;
+  btn.innerHTML = "Mengirim...";
 
   fetch(API_URL, {
     method: "POST",
     body: new FormData(form)
   })
   .then(() => {
-     // redirect ke halaman sukses
-    setTimeout(() => {
-        window.location.href = "success.html";
-    }, 800);
+    btn.innerHTML = "Berhasil ✓";
 
     form.reset();
     tahunTamatWrap.classList.add("d-none");
     tahunBoyongWrap.classList.add("d-none");
+
+    kab.value = "";
+    kec.innerHTML = '<option value="">Pilih Kecamatan</option>';
+    desa.innerHTML = '<option value="">Pilih Desa</option>';
+
+    setTimeout(() => {
+      window.location.href = "success.html";
+    }, 700);
+  })
+  .catch(() => {
+    btn.disabled = false;
+    btn.innerHTML = "Kirim Data";
+    alert("Gagal mengirim data");
   });
 };
