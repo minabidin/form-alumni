@@ -1,4 +1,4 @@
-const API_URL = "URL_WEB_APP_ANDA";
+const API_URL = "https://script.google.com/macros/s/AKfycbyqw9I7_DqciRcm1poVGJlVRgCr8hHs3v_J38rteG1aoMcNaAigZT0w96ghq8ioBB0/exec";
 
 const kab = document.getElementById("kabupaten");
 const kec = document.getElementById("kecamatan");
