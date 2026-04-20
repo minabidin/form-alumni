@@ -3,14 +3,19 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyqw9I7_DqciRcm1poVGJlV
 const kab = document.getElementById("kabupaten");
 const kec = document.getElementById("kecamatan");
 const desa = document.getElementById("desa");
+
 const tamat = document.getElementById("tamat");
 const tahunTamatWrap = document.getElementById("tahunTamatWrap");
+const tahunBoyongWrap = document.getElementById("tahunBoyongWrap");
+
+const tahunTamat = document.getElementById("tahunTamat");
+const tahunBoyong = document.getElementById("tahunBoyong");
+
 const form = document.getElementById("formData");
-const loading = document.getElementById("loading");
 
 let dataWilayah = {};
 
-// LOAD DATA
+// LOAD DATA (tanpa loading indicator)
 fetch(API_URL)
   .then(res => res.json())
   .then(data => {
@@ -19,14 +24,12 @@ fetch(API_URL)
     Object.keys(dataWilayah).forEach(k => {
       kab.innerHTML += `<option value="${k}">${k}</option>`;
     });
-
-    loading.style.display = "none";
   });
 
-// DROPDOWN
+// DROPDOWN WILAYAH
 kab.onchange = () => {
-  kec.innerHTML = '<option>Pilih Kecamatan</option>';
-  desa.innerHTML = '<option>Pilih Desa</option>';
+  kec.innerHTML = '<option value="">Pilih Kecamatan</option>';
+  desa.innerHTML = '<option value="">Pilih Desa</option>';
 
   Object.keys(dataWilayah[kab.value] || {}).forEach(k => {
     kec.innerHTML += `<option value="${k}">${k}</option>`;
@@ -34,16 +37,34 @@ kab.onchange = () => {
 };
 
 kec.onchange = () => {
-  desa.innerHTML = '<option>Pilih Desa</option>';
+  desa.innerHTML = '<option value="">Pilih Desa</option>';
 
   (dataWilayah[kab.value]?.[kec.value] || []).forEach(d => {
     desa.innerHTML += `<option value="${d}">${d}</option>`;
   });
 };
 
-// TAMAT
+// GENERATE TAHUN
+function generateTahun(select) {
+  const currentYear = new Date().getFullYear();
+  select.innerHTML = '<option value="">Pilih Tahun</option>';
+
+  for (let i = currentYear; i >= 1980; i--) {
+    select.innerHTML += `<option value="${i}">${i}</option>`;
+  }
+}
+
+// LOGIC TAMAT
 tamat.onchange = () => {
-  tahunTamatWrap.classList.toggle("d-none", tamat.value !== "Ya");
+  generateTahun(tahunBoyong);
+  tahunBoyongWrap.classList.remove("d-none");
+
+  if (tamat.value === "Ya") {
+    generateTahun(tahunTamat);
+    tahunTamatWrap.classList.remove("d-none");
+  } else {
+    tahunTamatWrap.classList.add("d-none");
+  }
 };
 
 // VALIDASI WA
@@ -70,5 +91,6 @@ form.onsubmit = function(e) {
 
     form.reset();
     tahunTamatWrap.classList.add("d-none");
+    tahunBoyongWrap.classList.add("d-none");
   });
 };
