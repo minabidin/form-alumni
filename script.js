@@ -73,8 +73,12 @@ function validWA(wa) {
 }
 
 // SUBMIT
+let isSubmitting = false; // kunci global
+
 form.onsubmit = function(e) {
   e.preventDefault();
+
+  if (isSubmitting) return; // cegah klik kedua
 
   if (!form.kabupaten.value || !form.kecamatan.value || !form.desa.value) {
     alert("Silakan pilih wilayah terlebih dahulu");
@@ -88,8 +92,10 @@ form.onsubmit = function(e) {
 
   const btn = form.querySelector("button[type='submit']");
 
+  isSubmitting = true; // aktifkan kunci
+
   btn.disabled = true;
-  btn.innerHTML = "Mengirim...";
+  btn.innerHTML = "Mengirim... ⏳";
 
   fetch(API_URL, {
     method: "POST",
@@ -98,21 +104,14 @@ form.onsubmit = function(e) {
   .then(() => {
     btn.innerHTML = "Berhasil ✓";
 
-    form.reset();
-    tahunTamatWrap.classList.add("d-none");
-    tahunBoyongWrap.classList.add("d-none");
-
-    kab.value = "";
-    kec.innerHTML = '<option value="">Pilih Kecamatan</option>';
-    desa.innerHTML = '<option value="">Pilih Desa</option>';
-
     setTimeout(() => {
       window.location.href = "success.html";
     }, 700);
   })
   .catch(() => {
+    isSubmitting = false; // buka lagi kalau gagal
     btn.disabled = false;
-    btn.innerHTML = "Kirim Data";
+    btn.innerHTML = "Mengirim... ⏳ Mohon tunggu";
     alert("Gagal mengirim data");
   });
 };
